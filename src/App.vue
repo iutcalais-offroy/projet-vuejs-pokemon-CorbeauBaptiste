@@ -1,29 +1,21 @@
-<script lang="ts" setup>
-import {NConfigProvider} from 'naive-ui';
-import HeaderMenu from './components/HeaderMenu.component.vue';
+<script setup>
+  import {computed, ref} from 'vue';
+
+  const counter = ref(0);
+
+  const doubleCounter = computed(() => counter.value * 2);
+
+  const reset = () => {
+    counter.value = 0;
+  };
 </script>
 
 <template>
-  <n-config-provider>
-    <n-layout>
-      <n-layout-header>
-        <HeaderMenu/>
-      </n-layout-header>
-      <n-layout-content class="content">
-        <n-space justify="center">
-          <n-message-provider>
-            <RouterView/>
-          </n-message-provider>
-        </n-space>
-      </n-layout-content>
-    </n-layout>
-  </n-config-provider>
+  <div>
+    <p>Compteur : {{ counter }}</p>
+    <p>Double compteur : {{ doubleCounter }}</p>
+    <button @click="counter++">Incrémenter</button>
+    <button @click="reset">Réinitialiser</button>
+    <p v-if="counter >= 5">Le résultat est supérieur à 5</p>
+  </div>
 </template>
-
-<style scoped>
-.content {
-  margin-top: 1em;
-  margin-left: 3em;
-  margin-right: 3em;
-}
-</style>
