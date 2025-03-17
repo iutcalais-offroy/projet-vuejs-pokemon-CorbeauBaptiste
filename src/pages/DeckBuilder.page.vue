@@ -1,7 +1,9 @@
 <template>
   <div class="card-list">
+    <n-input v-model="searchQuery" placeholder="Rechercher un Pokémon..." class="search-input" />
+    
     <n-grid :cols="3" x-gap="12" y-gap="12">
-      <n-grid-item v-for="pokemon in pokemonList" :key="pokemon.id">
+      <n-grid-item v-for="pokemon in filteredPokemonList" :key="pokemon.id">
         <n-card>
           <template #header>
             <div class="card-header">
@@ -23,39 +25,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
-
-interface PokemonApiResponse {
-  id: number;
-  name: string;
-  pokedexId: number;
-  typeId: number;
-  lifePoints: number;  // L'API renvoie 'lifePoints', donc il faut l'ajouter
-  imageUrl: string;
-  height: number;
-  weight: number;
-  attackId: number;
-  weaknessId: number;
-  type: {
-    id: number;
-    name: string;
-  };
-  attack: {
-    id: number;
-    name: string;
-    damages: number;
-    typeId: number;
-    type: {
-      id: number;
-      name: string;
-    };
-  };
-  weakness: {
-    id: number;
-    name: string;
-  };
-}
 
 interface PokemonCard {
   id: string;
@@ -66,31 +37,31 @@ interface PokemonCard {
   rarity: string;
 }
 
-
 const pokemonList = ref<PokemonCard[]>([]);
+const searchQuery = ref<string>('');
 
 const fetchPokemonData = async () => {
   try {
-    const response = await axios.get<PokemonApiResponse[]>('https://pokemon-api-seyrinian-production.up.railway.app/pokemon-cards');
+    const response = await axios.get('https://pokemon-api-seyrinian-production.up.railway.app/pokemon-cards');
     
-    console.log("Données Pokémon récupérées :", response.data);
-
-    // Mapper les données de l'API au format attendu par l'affichage
-    pokemonList.value = response.data.map(pokemon => ({
-      id: String(pokemon.id), // Convertit en string pour éviter les erreurs dans v-for
+    pokemonList.value = response.data.map((pokemon: any) => ({
+      id: String(pokemon.id),
       name: pokemon.name,
-      type: pokemon.type.name, // Accès correct à l'objet type
-      hp: pokemon.lifePoints,  // Utilise 'lifePoints' à la place de 'hp'
+      type: pokemon.type?.name || 'Inconnu',
+      hp: pokemon.lifePoints,
       imageUrl: pokemon.imageUrl,
-      rarity: pokemon.weakness.name // Met la faiblesse comme 'rarity' (à adapter si nécessaire)
+      rarity: pokemon.weakness?.name || 'Aucune'
     }));
-
   } catch (error) {
     console.error('Erreur lors de la récupération des cartes Pokémon :', error);
   }
 };
 
-
+const filteredPokemonList = computed(() => {
+  return pokemonList.value.filter(pokemon => 
+    pokemon.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
 
 onMounted(() => {
   fetchPokemonData();
@@ -100,6 +71,11 @@ onMounted(() => {
 <style scoped>
 .card-list {
   padding: 16px;
+}
+
+.search-input {
+  margin-bottom: 16px;
+  width: 100%;
 }
 
 .card-header {
